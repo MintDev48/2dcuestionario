@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Estudio Rápido: Análisis y Diseño de Sistemas</title>
+    <!-- Carga de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para la animación de revelación */
+        .answer-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+        }
+
+        .answer-content.active {
+            max-height: 500px; /* Suficiente altura para la respuesta */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Estilo para el ícono de búsqueda */
+        .search-icon {
+            pointer-events: none;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'indigo': {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="p-4 sm:p-8">
+        <header class="max-w-4xl mx-auto mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+                Guía Rápida de Análisis y Diseño de Sistemas
+            </h1>
+            <p class="text-gray-500 text-lg">
+                Total de <span id="total-questions">0</span> Preguntas Clave para tu estudio. ¡Ponte a prueba!
+            </p>
+        </header>
+
+        <!-- Barra de Búsqueda -->
+        <div class="max-w-xl mx-auto mb-8 relative">
+            <!-- Icono de Búsqueda (SVG de Lucide) -->
+            <svg class="search-icon absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            
+            <input
+                type="text"
+                id="search-input"
+                oninput="filterQuestions()"
+                placeholder="Buscar por número (ej: 42) o palabra clave (ej: UML, Agile, DFD)..."
+                class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-700"
+            />
+        </div>
+
+        <!-- Conteo y Resultados -->
+        <div class="max-w-4xl mx-auto mb-6">
+            <p class="text-gray-600 text-sm">
+                Mostrando <span id="result-count" class="font-bold text-indigo-600">0</span> resultados.
+            </p>
+        </div>
+
+        <!-- Contenedor de Preguntas -->
+        <div id="questions-container" class="max-w-4xl mx-auto space-y-6 pb-10">
+            <!-- Las tarjetas de preguntas se inyectarán aquí por JavaScript -->
+        </div>
+
+        <!-- Mensaje de No Resultados (oculto por defecto) -->
+        <div id="no-results-message" class="text-center p-10 bg-white rounded-xl shadow-lg max-w-4xl mx-auto hidden">
+            <h2 class="text-xl font-semibold text-gray-700">No se encontraron resultados.</h2>
+            <p class="text-gray-500">Intenta buscar con un número de pregunta diferente (1-65) o una palabra clave distinta.</p>
+        </div>
+
+    </div>
+
+    <script src="questions.js"></script>
+    <script>
+
+        const container = document.getElementById('questions-container');
+        const searchInput = document.getElementById('search-input');
+        const resultCountSpan = document.getElementById('result-count');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const noResultsMessage = document.getElementById('no-results-message');
+
+        /**
+         * Normaliza una cadena de texto eliminando tildes y convirtiéndola a minúsculas.
+         * @param {string} text El texto a normalizar.
+         * @returns {string} El texto normalizado.
+         */
+        function normalizeText(text) {
+            return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        /**
+         * Decodifica entidades HTML en una cadena de texto.
+         * @param {string} text El texto con entidades HTML.
+         * @returns {string} El texto decodificado.
+         */
+        function decodeHtmlEntities(text) {
+            if (typeof text !== 'string') return text;
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = text;
+            return textArea.value;
+        }
+
+        /**
+         * Codifica una cadena de texto a entidades HTML.
+         * @param {string} text El texto a codificar.
+         * @returns {string} El texto con entidades HTML.
+         */
+        function encodeHtmlEntities(text) {
+            const textArea = document.createElement('textarea');
+            textArea.textContent = text;
+            return textArea.innerHTML;
+        }
+
+        /**
+         * Crea y devuelve el elemento HTML para una tarjeta de pregunta.
+         * @param {Object} question El objeto pregunta/respuesta.
+         * @param {number} index El índice original de la pregunta (para el número Q).
+         * @returns {string} El HTML de la tarjeta.
+         */
+        function createQuestionCardHTML(question, index) {
+            const qNum = index + 1;
+            // Iconos SVG de Lucide integrados
+            const bookOpenIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500 mr-3 flex-shrink-0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+            const checkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>';
+            const chevronDown = '<svg id="chevron-down-' + qNum + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+            const chevronUp = '<svg id="chevron-up-' + qNum + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden"><path d="m18 15-6-6-6 6"/></svg>';
+
+            // Divide la pregunta en texto y bloque de código
+            const preguntaParts = question.pregunta.split('\n');
+            const questionText = preguntaParts[0];
+            
+            const rawCode = preguntaParts.length > 1 ? preguntaParts.slice(1).join('\n') : '';
+            
+            // Para mostrar código, SIEMPRE debe estar escapado en HTML.
+            // Primero decodificamos para normalizar (en caso de que ya venga escapado)
+            // y luego codificamos para asegurar que se muestre como texto.
+            const codeBlock = rawCode ? encodeHtmlEntities(decodeHtmlEntities(rawCode)) : '';
+
+            return `
+                <div class="bg-white shadow-lg rounded-xl p-6 border-t-4 border-indigo-500 hover:shadow-xl transition duration-300">
+                    <!-- Cabecera de la Pregunta -->
+                    <div class="flex justify-between items-start cursor-pointer" onclick="toggleAnswer(${qNum})">
+                        <div class="text-lg font-semibold text-gray-800 flex items-start w-full mr-4">
+                            ${bookOpenIcon}
+                            <div class="w-full">
+                                <span class="text-indigo-600 mr-2 flex-shrink-0">Q${qNum}:</span>
+                                <span>${questionText}</span>
+                                ${codeBlock ? `
+                                    <div class="mt-3 text-sm font-normal text-left text-gray-800 bg-gray-50 p-4 rounded-lg border border-gray-200 overflow-x-auto">
+                                        <code class="font-mono whitespace-pre-wrap">${codeBlock}</code>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <button
+                            class="p-2 text-indigo-500 hover:text-indigo-700 transition duration-150 flex-shrink-0"
+                            aria-label="Toggle Answer"
+                        >
+                            ${chevronDown}
+                            ${chevronUp}
+                        </button>
+                    </div>
+
+                    <!-- Imagen Opcional -->
+                    ${question.imagen ? `<div class="mt-4 text-center"><img src="${question.imagen}" alt="Imagen para la pregunta ${qNum}" class="max-w-full h-auto inline-block rounded-lg shadow-md border"></div>` : ''}
+
+
+                    <!-- Contenido de la Respuesta (Inicialmente oculto) -->
+                    <div id="answer-content-${qNum}" class="answer-content">
+                        <div class="mt-4 pt-4 border-t border-indigo-200">
+                            <p class="text-sm font-medium text-indigo-600 mb-2 flex items-center">
+                                ${checkIcon} Respuesta Correcta:
+                            </p>
+                            <p class="text-gray-600 text-base bg-indigo-50 p-3 rounded-lg border border-indigo-300">
+                                ${question.respuesta}
+                            </p>
+                            <!-- Texto Adicional Opcional -->
+                            ${question.textoAdicional ? `<p class="mt-3 text-sm text-gray-500 bg-gray-100 p-3 rounded-lg border border-gray-200">${question.textoAdicional}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Alterna la visibilidad de la respuesta y cambia el ícono chevron.
+         * @param {number} qNum El número de la pregunta.
+         */
+        window.toggleAnswer = function(qNum) {
+            const answerContent = document.getElementById(`answer-content-${qNum}`);
+            const chevronDown = document.getElementById(`chevron-down-${qNum}`);
+            const chevronUp = document.getElementById(`chevron-up-${qNum}`);
+
+            const isActive = answerContent.classList.contains('active');
+
+            if (isActive) {
+                // Ocultar
+                answerContent.classList.remove('active');
+                chevronDown.classList.remove('hidden');
+                chevronUp.classList.add('hidden');
+            } else {
+                // Mostrar
+                answerContent.classList.add('active');
+                chevronDown.classList.add('hidden');
+                chevronUp.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * Filtra las preguntas basándose en el texto de entrada y regenera la lista.
+         */
+        window.filterQuestions = function() {
+            const searchTerm = searchInput.value.trim();
+            const lowerCaseSearch = normalizeText(searchTerm);
+            let filteredQuestionsHTML = '';
+            let visibleCount = 0;
+
+            initialQuestions.forEach((q, index) => {
+                const qNum = index + 1;
+                const normalizedQuestion = normalizeText(q.pregunta);
+                
+                let isMatch = false;
+
+                // 1. Búsqueda por número de pregunta
+                if (searchTerm && qNum.toString() === searchTerm) {
+                    isMatch = true;
+                } 
+                // 2. Búsqueda por texto de la pregunta (si no es una búsqueda por número exacta o si es una búsqueda de texto)
+                else if (!searchTerm || normalizedQuestion.includes(lowerCaseSearch)) {
+                    isMatch = true;
+                }
+
+                if (isMatch) {
+                    filteredQuestionsHTML += createQuestionCardHTML(q, index);
+                    visibleCount++;
+                }
+            });
+
+            container.innerHTML = filteredQuestionsHTML;
+            resultCountSpan.textContent = visibleCount;
+            
+            // Mostrar u ocultar el mensaje de no resultados
+            if (visibleCount === 0 && searchTerm) {
+                noResultsMessage.classList.remove('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Inicializa la aplicación al cargar la página.
+         */
+        window.onload = function() {
+            totalQuestionsSpan.textContent = initialQuestions.length;
+            filterQuestions(); // Mostrar todas las preguntas inicialmente
+        }
+
+    </script>
+</body>
+</html>
