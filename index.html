@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guía de Estudio Rápido: Análisis y Diseño de Sistemas</title>
+    <title>BANCO DE PREGUNTAS – JUNIO - OCTUBRE 2024</title>
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -23,6 +23,17 @@
         /* Estilo para el ícono de búsqueda */
         .search-icon {
             pointer-events: none;
+        }
+        .sticky-search {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background-color: white; /* Or the appropriate background color */
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
     </style>
     <script>
@@ -52,20 +63,11 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-white font-sans">
 
-    <div class="p-4 sm:p-8">
-        <header class="max-w-4xl mx-auto mb-8 text-center">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
-                Guía Rápida de Análisis y Diseño de Sistemas
-            </h1>
-            <p class="text-gray-500 text-lg">
-                Total de <span id="total-questions">0</span> Preguntas Clave para tu estudio. ¡Ponte a prueba!
-            </p>
-        </header>
-
-        <!-- Barra de Búsqueda -->
-        <div class="max-w-xl mx-auto mb-8 relative">
+    <!-- Barra de Búsqueda -->
+    <div class="sticky-search px-4 sm:px-8">
+        <div class="max-w-xl mx-auto relative">
             <!-- Icono de Búsqueda (SVG de Lucide) -->
             <svg class="search-icon absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             
@@ -77,6 +79,17 @@
                 class="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-full shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-700"
             />
         </div>
+    </div>
+
+    <div class="p-4 sm:p-8" style="padding-top: 7rem;">
+        <header class="max-w-4xl mx-auto mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
+                BANCO DE PREGUNTAS – JUNIO - OCTUBRE 2024
+            </h1>
+            <p class="text-gray-500 text-lg">
+                Total de <span id="total-questions">0</span> Preguntas Clave para tu estudio. ¡Ponte a prueba!
+            </p>
+        </header>
 
         <!-- Conteo y Resultados -->
         <div class="max-w-4xl mx-auto mb-6">
